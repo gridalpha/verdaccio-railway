@@ -32,13 +32,40 @@ fi
 PACKAGE_ACCESS="${VERDACCIO_PACKAGE_ACCESS:-\$authenticated}"
 MAX_USERS="${VERDACCIO_MAX_USERS:--1}"
 UPLINK_URL="${VERDACCIO_UPLINK_URL:-https://registry.npmjs.org/}"
+PRIVATE_SCOPE="${VERDACCIO_PRIVATE_SCOPE:-}"
+
+# A scope named here is served locally only — never merged with whatever the
+# upstream registry happens to publish under the same name.
+SCOPE_BLOCK=/tmp/private-scope.yaml
+: > "$SCOPE_BLOCK"
+if [ -n "$PRIVATE_SCOPE" ]; then
+  case "$PRIVATE_SCOPE" in @*) ;; *) PRIVATE_SCOPE="@$PRIVATE_SCOPE" ;; esac
+  {
+    printf "  '%s/*':\n" "$PRIVATE_SCOPE"
+    printf '    access: $authenticated\n'
+    printf '    publish: $authenticated\n'
+    printf '    unpublish: $authenticated\n'
+    printf '\n'
+  } > "$SCOPE_BLOCK"
+  log "private scope $PRIVATE_SCOPE/* will not be proxied upstream"
+fi
+
+STAGED=/tmp/config.staged.yaml
+awk -v blockfile="$SCOPE_BLOCK" '
+  /__PRIVATE_SCOPE_BLOCK__/ {
+    while ((getline line < blockfile) > 0) print line
+    close(blockfile)
+    next
+  }
+  { print }
+' /verdaccio/conf/config.template.yaml > "$STAGED"
 
 sed -e "s|__STORAGE__|$STORAGE_DIR|g" \
     -e "s|__HTPASSWD__|$HTPASSWD_FILE|g" \
     -e "s|__MAX_USERS__|$MAX_USERS|g" \
     -e "s|__UPLINK_URL__|$UPLINK_URL|g" \
     -e "s|__PACKAGE_ACCESS__|$PACKAGE_ACCESS|g" \
-    /verdaccio/conf/config.template.yaml > "$CONF_FILE"
+    "$STAGED" > "$CONF_FILE"
 chown "$UID_N:$GID_N" "$CONF_FILE"
 chmod 0644 "$CONF_FILE"
 if grep -q '__[A-Z_]*__' "$CONF_FILE"; then

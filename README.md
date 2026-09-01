@@ -25,6 +25,7 @@ hands over to the image's own entrypoint.
 | `VERDACCIO_PACKAGE_ACCESS` | `$authenticated` | Who may read packages. Set to `$all` for a public read-only mirror |
 | `VERDACCIO_MAX_USERS` | `-1` | Self-registration limit. `-1` disables `npm adduser`; raise it to let people sign up |
 | `VERDACCIO_UPLINK_URL` | `https://registry.npmjs.org/` | Upstream registry proxied and cached |
+| `VERDACCIO_PRIVATE_SCOPE` | — | A scope (`@acme`) served locally only, never merged with an upstream package of the same name |
 | `VERDACCIO_PUBLIC_URL` | — | Public base URL, so tarball links point at the domain rather than the container |
 | `VERDACCIO_DATA_DIR` | `/data` | Volume mount path |
 | `VERDACCIO_PORT` / `PORT` | `4873` | Listen port |

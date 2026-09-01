@@ -38,6 +38,10 @@ uplinks:
       maxFreeSockets: 10
 
 packages:
+  # An optional scope that is never proxied upstream, so a public package of the
+  # same name can never be merged into a private one (dependency confusion).
+  # Rendered only when VERDACCIO_PRIVATE_SCOPE is set.
+__PRIVATE_SCOPE_BLOCK__
   '@*/*':
     access: __PACKAGE_ACCESS__
     publish: $authenticated
