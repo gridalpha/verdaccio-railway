@@ -1,0 +1,90 @@
+# Verdaccio registry configuration.
+#
+# Rendered to /verdaccio/conf/config.yaml at boot by entrypoint.sh; the __NAME__
+# placeholders are the only parts a deployer can change from a Railway variable.
+# https://verdaccio.org/docs/configuration
+
+storage: __STORAGE__
+plugins: /verdaccio/plugins
+
+web:
+  title: Verdaccio
+  gravatar: false
+  sort_packages: asc
+  showThemeSwitch: true
+
+auth:
+  htpasswd:
+    file: __HTPASSWD__
+    # bcrypt rather than the shipped default of crypt.
+    algorithm: bcrypt
+    rounds: 10
+    # -1 disables self-registration, which is what keeps a public registry URL
+    # from becoming an open one. The entrypoint seeds the operator's account.
+    max_users: __MAX_USERS__
+
+uplinks:
+  npmjs:
+    url: __UPLINK_URL__
+    cache: true
+    maxage: 2m
+    timeout: 30s
+    max_fails: 5
+    fail_timeout: 5m
+    agent_options:
+      keepAlive: true
+      maxSockets: 40
+      maxFreeSockets: 10
+
+packages:
+  '@*/*':
+    access: __PACKAGE_ACCESS__
+    publish: $authenticated
+    unpublish: $authenticated
+    proxy: npmjs
+
+  '**':
+    access: __PACKAGE_ACCESS__
+    publish: $authenticated
+    unpublish: $authenticated
+    proxy: npmjs
+
+server:
+  # Above Railway's edge idle timeout, so the edge never reuses a socket the
+  # registry has just closed.
+  keepAliveTimeout: 90
+  # Railway's edge overwrites a client-supplied X-Forwarded-For, so trusting
+  # every hop lands Express on the real client address. proxy-addr rejects a /0
+  # prefix, hence two half-spaces per family.
+  trustProxy: '0.0.0.0/1,128.0.0.0/1,::/1,8000::/1'
+
+middlewares:
+  audit:
+    enabled: true
+
+security:
+  api:
+    # Signed JWTs for npm clients, with the legacy token format still accepted
+    # so older CLIs keep working.
+    legacy: true
+    jwt:
+      sign:
+        expiresIn: 60d
+  web:
+    sign:
+      expiresIn: 7d
+
+# Login and token endpoints only.
+userRateLimit:
+  windowMs: 60000
+  max: 500
+
+max_body_size: 100mb
+
+publish:
+  allow_offline: false
+
+log:
+  type: stdout
+  format: pretty
+  level: http
