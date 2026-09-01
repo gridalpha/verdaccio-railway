@@ -1,7 +1,8 @@
 # Verdaccio registry configuration.
 #
-# Rendered to /verdaccio/conf/config.yaml at boot by entrypoint.sh; the __NAME__
-# placeholders are the only parts a deployer can change from a Railway variable.
+# Rendered to /verdaccio/conf/config.yaml at boot by entrypoint.sh. The
+# double-underscore placeholders below are the only parts a deployer can change
+# from a Railway variable.
 # https://verdaccio.org/docs/configuration
 
 storage: __STORAGE__
